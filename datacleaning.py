@@ -15,13 +15,13 @@ class DataCleaning:
         # Count the frequency of each Class nbr and store it in a dictionary
         class_nbr_freq = self.df['Class nbr'].value_counts().to_dict()
 
-        # Loop through each row in the DataFrame and add the "Class nbr" and "Room" values to the dictionary
+        # Loop through each row in the DataFrame and add the "Class nbr" and relevant values to the dictionary
         for index, row in self.df.iterrows():
             class_nbr = row['Class nbr']
-            room = row['Course title']
+            title = row['Course title']
             instructor = row['Instructor']
             duration = row['Actual Class Duration']
-            self.class_nbr_dict[class_nbr] = {'Room': room, 'Instructor': instructor, 'Actual Class Duration':duration, 'Frequency':class_nbr_freq[class_nbr] }
+            self.class_nbr_dict[class_nbr] = {'Course title': title, 'Instructor': instructor, 'Actual Class Duration':duration, 'Frequency':class_nbr_freq[class_nbr] }
         
 
 dc=DataCleaning()
