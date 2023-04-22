@@ -20,17 +20,20 @@ class DataCleaning:
             class_nbr = row['Class nbr']
             title = row['Course title']
             instructor = row['Instructor']
+            if '\n' in instructor:
+                instructor = instructor.split("\n")
             duration = row['Actual Class Duration']
             self.class_nbr_dict[class_nbr] = {'Course title': title, 'Instructor': instructor, 'Actual Class Duration':duration, 'Frequency':class_nbr_freq[class_nbr] }
         
 
-dc=DataCleaning()
+# dc=DataCleaning()
 
-print("-------- Statistics--------")
-print("Number of classrooms: ",len(dc.room_list))
-print("Number of Classes (no. of unique class br) at Habib: ",len(dc.class_nbr_dict))
-print("Dictionary storing all data")
-print(dc.class_nbr_dict)
+# print("-------- Statistics--------")
+# print("Number of classrooms: ",len(dc.room_list))
+# print("Number of Classes (no. of unique class br) at Habib: ",len(dc.class_nbr_dict))
+# print("Dictionary storing all data")
+# print(dc.class_nbr_dict)
+# print(dc.room_list)
 
 
 
