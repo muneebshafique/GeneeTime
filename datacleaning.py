@@ -10,8 +10,9 @@ class DataCleaning:
         self.extractingFromDataset()
 
     def extractingFromDataset(self):
-        # Extract the unique values of "Class nbr" and store them in a list
+        # Extract the unique values of "Class nbr" and "Instructor and store them in a list
         self.room_list = self.df['Room'].unique().tolist()
+        self.instructor_list = self.df['Instructor'].unique().tolist()
 
         # Count the frequency of each Class nbr and store it in a dictionary
         class_nbr_freq = self.df['Class nbr'].value_counts().to_dict()
@@ -27,11 +28,11 @@ class DataCleaning:
             self.class_nbr_dict[class_nbr] = {'Course title': title, 'Instructor': instructor, 'Actual Class Duration':duration, 'Frequency':class_nbr_freq[class_nbr] }
         
 
-dc=DataCleaning()
+# dc=DataCleaning()
 
-print("-------- Statistics--------")
-print("Number of classrooms: ",len(dc.room_list))
-print("Number of Classes (no. of unique class br) at Habib: ",len(dc.class_nbr_dict))
-print("Dictionary storing all data")
-print(dc.class_nbr_dict)
-print(dc.room_list)
+# print("-------- Statistics--------")
+# print("Number of classrooms: ",len(dc.room_list))
+# print("Number of Classes (no. of unique class br) at Habib: ",len(dc.class_nbr_dict))
+# print("Dictionary storing all data")
+# print(dc.class_nbr_dict)
+# print(dc.room_list)
