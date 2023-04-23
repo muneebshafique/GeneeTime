@@ -2,9 +2,10 @@ import pandas as pd
 
 
 class DataCleaning:
-    def __init__(self) -> None:    
+    def __init__(self, filename) -> None:    
+        self.filename = filename
         self.class_nbr_dict ={}
-        self.df = pd.read_csv('Spring 2023 Schedule.csv')
+        self.df = pd.read_csv(self.filename)
 
         self.extractingFromDataset()
 
@@ -26,14 +27,11 @@ class DataCleaning:
             self.class_nbr_dict[class_nbr] = {'Course title': title, 'Instructor': instructor, 'Actual Class Duration':duration, 'Frequency':class_nbr_freq[class_nbr] }
         
 
-# dc=DataCleaning()
+dc=DataCleaning()
 
-# print("-------- Statistics--------")
-# print("Number of classrooms: ",len(dc.room_list))
-# print("Number of Classes (no. of unique class br) at Habib: ",len(dc.class_nbr_dict))
-# print("Dictionary storing all data")
-# print(dc.class_nbr_dict)
-# print(dc.room_list)
-
-
-
+print("-------- Statistics--------")
+print("Number of classrooms: ",len(dc.room_list))
+print("Number of Classes (no. of unique class br) at Habib: ",len(dc.class_nbr_dict))
+print("Dictionary storing all data")
+print(dc.class_nbr_dict)
+print(dc.room_list)
