@@ -73,38 +73,65 @@ class TimeTable(SelectionSchemes):
         # print(len(self.faculty_working_hours))
 
     def initializePopulation(self):
-        # for i in range(self.populationSize):
+        for i in range(self.populationSize):
             self.initializeChromosome()
             for classNumber, data in self.data.class_nbr_dict.items():
                 assigned_days = random.sample(self.availableDays, data['Frequency'])
+                checkedDays = []
+                for i in assigned_days:
+                    checkedDays.append(i)
                 for day in assigned_days:
                      room = random.sample(self.data.room_list,1)[0]
-                     if len(self.chromosome[day][room]) == 0:
+                     if len(self.chromosome[day][room]) == 0: #add faculty
                         self.chromosome[day][room].append([self.DAY_START,self.generate_time(self.DAY_START,data['Actual Class Duration']),classNumber])
                      else:
                         last_class=self.chromosome[day][room][-1]
                         current_class_start_time = self.add_five_minutes(last_class[1])
-                        if self.is_end_time_within_limit(current_class_start_time,data['Actual Class Duration']):
+                        if self.is_end_time_within_limit(current_class_start_time,data['Actual Class Duration']): #add faculty
                               self.chromosome[day][room].append([current_class_start_time,self.generate_time(current_class_start_time,data['Actual Class Duration']),classNumber])
                         else:
                             is_roomfound = 0 
                             room_number_index = self.data.room_list.index(room)
-                            room_number_index=(room_number_index+1)%(len(self.data.room_list))
-                            for i in range (room_number_index,len(self.data.room_list)):
-                                next_room = self.data.room_list[i]
-                                if len(self.chromosome[day][next_room]) == 0:
+                            startIndex = room_number_index
+                            while True:
+                                room_number_index=(room_number_index+1)%(len(self.data.room_list))
+                                # for i in range (room_number_index,len(self.data.room_list)):
+                                next_room = self.data.room_list[room_number_index]
+                                # room_number_index+=1 #22
+                                if len(self.chromosome[day][next_room]) == 0: #add faculty
                                     self.chromosome[day][next_room].append([self.DAY_START,self.generate_time(self.DAY_START,data['Actual Class Duration']),classNumber])
                                 else:
                                     last_class=self.chromosome[day][next_room][-1]
                                     current_class_start_time = self.add_five_minutes(last_class[1])
-                                    if self.is_end_time_within_limit(current_class_start_time,data['Actual Class Duration']):
+                                    if self.is_end_time_within_limit(current_class_start_time,data['Actual Class Duration']): #add faculty
                                         self.chromosome[day][next_room].append([current_class_start_time,self.generate_time(current_class_start_time,data['Actual Class Duration']),classNumber])
                                         is_roomfound=1
                                         break
+                                if room_number_index == startIndex and is_roomfound == 0:
+                                    break
                             
-            print(self.chromosome)
+                                
+                            if (is_roomfound == 0):
+                                checkedDays.append(day)
+                                potentialDays = set(self.data.room_list) - set(checkedDays)
+                                nextDay = random.sample(potentialDays, 1)[0]
+                                assigned_days.append(nextDay)
+
+            self.population.append(self.chromosome)             
+                                
+
+         
+        print(self.population[0])
+        print(len(self.population))
     #                 chromosome[day][classNumber] = [data['Course title'], data['Instructor'], room, startTime, endTime]
     #         self.population.append(chromosome)
+    
+    def checkClasses(self):
+        counter = 0
+        for day, dayInfo in self.chromosome.items():
+            for roomNumber, roomInfo in dayInfo.items():
+                counter+=len(roomInfo)
+        print(counter)
 
 
 
@@ -116,6 +143,7 @@ generations = 100
 
 
 T1=TimeTable(filename, populationSize, offspringsNumber, mutationRate)
+# T1.checkClasses()
 
     # def initeializePopulation(self):
     #     for i in range(self.populationSize):
