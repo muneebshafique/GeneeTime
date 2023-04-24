@@ -23,6 +23,7 @@ class TimeTable(SelectionSchemes):
         self.DAY_END = "19:00"
         
         # self.initializeChromosome()
+        # self.facultyClash("Sahaab Bader Sheikh","Monday")
         self.initializePopulation()
 
     def generate_start_time(self):
@@ -44,7 +45,6 @@ class TimeTable(SelectionSchemes):
 
 
     def is_end_time_within_limit(self,start_time_str, duration_minutes):
-        # Convert start time string to datetime object
         start_time = datetime.datetime.strptime(start_time_str, '%H:%M')
         duration = datetime.timedelta(minutes=int(duration_minutes))
         end_time = start_time + duration
@@ -72,6 +72,23 @@ class TimeTable(SelectionSchemes):
         # print(self.faculty_working_hours)
         # print(len(self.faculty_working_hours))
 
+    def facultyClash(self, instructor,day, start_time, end_time):
+        start_time = datetime.datetime.strptime(start_time, '%H:%M')
+        end_time = datetime.datetime.strptime(end_time, '%H:%M')
+        daily_schedule=self.faculty_working_hours[instructor][day]
+        if len(daily_schedule) == 0:
+                return False
+        else:
+            for _class in daily_schedule:
+                other_start_time = datetime.datetime.strptime(_class[0], '%H:%M')
+                other_end_time =  datetime.datetime.strptime(_class[1], '%H:%M')
+                if start_time < other_end_time and end_time > other_start_time:
+                    return True
+            return False
+
+    def addToFacultySchedule(self, instructor, day, start_time, end_time):
+        self.faculty_working_hours[instructor][day].append([start_time,end_time])
+
     def initializePopulation(self):
         for i in range(self.populationSize):
             self.initializeChromosome()
@@ -80,40 +97,72 @@ class TimeTable(SelectionSchemes):
                 checkedDays = []
                 for i in assigned_days:
                     checkedDays.append(i)
+             
                 for day in assigned_days:
-                     room = random.sample(self.data.room_list,1)[0]
-                     if len(self.chromosome[day][room]) == 0: #add faculty
-                        self.chromosome[day][room].append([self.DAY_START,self.generate_time(self.DAY_START,data['Actual Class Duration']),classNumber])
-                     else:
-                        last_class=self.chromosome[day][room][-1]
+                    is_roomfound = 0
+                    room = random.sample(self.data.room_list,1)[0]
+
+                    # print(self.chromosome[day])
+                    # print("ROOM: ",room," DAY: ",day)
+                    # if room in (self.chromosome[day]):
+                    #     print("ROOM: ",room," DAY: ",day)
+                    # print(day)
+                    # print(self.chromosome)
+                    if len(self.chromosome[day][room]) == 0:
+                        current_class_start_time = self.DAY_START
+                    else:
+                        last_class = self.chromosome[day][room][-1]
                         current_class_start_time = self.add_five_minutes(last_class[1])
-                        if self.is_end_time_within_limit(current_class_start_time,data['Actual Class Duration']): #add faculty
-                              self.chromosome[day][room].append([current_class_start_time,self.generate_time(current_class_start_time,data['Actual Class Duration']),classNumber])
-                        else:
-                            is_roomfound = 0 
+
+
+                    end_time = self.generate_time(current_class_start_time,data['Actual Class Duration'])
+                    if  self.facultyClash(data["Instructor"], day,current_class_start_time, end_time) == False and self.is_end_time_within_limit(current_class_start_time,data['Actual Class Duration']): #add faculty
+                        self.chromosome[day][room].append([current_class_start_time,end_time,classNumber])
+                        self.addToFacultySchedule(data["Instructor"],day, current_class_start_time, end_time)
+                        is_roomfound = 1
+                    else:
+                        # last_class=self.chromosome[day][room][-1]
+                        # current_class_start_time = self.add_five_minutes(last_class[1])
+                        # end_time = self.generate_time(current_class_start_time,data['Actual Class Duration'])
+                        # if self.is_end_time_within_limit(current_class_start_time,data['Actual Class Duration']) and self.facultyClash(data["Instructor"], day,current_class_start_time, end_time) == False:                            
+                        #     self.chromosome[day][room].append([current_class_start_time,end_time,classNumber])
+                        #     self.addToFacultySchedule(data["Instructor"],day, current_class_start_time, end_time)
+                        # else:
+                             
                             room_number_index = self.data.room_list.index(room)
                             startIndex = room_number_index
+                            
                             while True:
                                 room_number_index=(room_number_index+1)%(len(self.data.room_list))
-                                # for i in range (room_number_index,len(self.data.room_list)):
                                 next_room = self.data.room_list[room_number_index]
-                                # room_number_index+=1 #22
-                                if len(self.chromosome[day][next_room]) == 0: #add faculty
-                                    self.chromosome[day][next_room].append([self.DAY_START,self.generate_time(self.DAY_START,data['Actual Class Duration']),classNumber])
+                                if len(self.chromosome[day][next_room]) == 0:
+                                    current_class_start_time = self.DAY_START
                                 else:
-                                    last_class=self.chromosome[day][next_room][-1]
+                                    last_class = self.chromosome[day][next_room][-1]
                                     current_class_start_time = self.add_five_minutes(last_class[1])
-                                    if self.is_end_time_within_limit(current_class_start_time,data['Actual Class Duration']): #add faculty
-                                        self.chromosome[day][next_room].append([current_class_start_time,self.generate_time(current_class_start_time,data['Actual Class Duration']),classNumber])
-                                        is_roomfound=1
-                                        break
+
+                                end_time = self.generate_time(current_class_start_time,data['Actual Class Duration'])
+                                if  self.facultyClash(data["Instructor"], day,current_class_start_time, end_time) == False and  self.is_end_time_within_limit(current_class_start_time,data['Actual Class Duration']): #add faculty
+                                    self.chromosome[day][next_room].append([current_class_start_time,end_time,classNumber])
+                                    self.addToFacultySchedule(data["Instructor"],day, current_class_start_time, end_time)
+                                # else:
+                                #     last_class=self.chromosome[day][next_room][-1]
+                                #     current_class_start_time = self.add_five_minutes(last_class[1])
+                                #     end_time = self.generate_time(current_class_start_time,data['Actual Class Duration'])
+                                #     if self.is_end_time_within_limit(current_class_start_time,data['Actual Class Duration'])and self.facultyClash(data["Instructor"], day,current_class_start_time, end_time) == False: #add faculty
+                                #         self.chromosome[day][next_room].append([current_class_start_time,end_time,classNumber])
+                                #         self.addToFacultySchedule(data["Instructor"],day, current_class_start_time, end_time)
+                                    is_roomfound=1
+                                    break
                                 if room_number_index == startIndex and is_roomfound == 0:
                                     break
                             
-                                
-                            if (is_roomfound == 0):
+
+
+                if (is_roomfound == 0):
                                 checkedDays.append(day)
-                                potentialDays = set(self.data.room_list) - set(checkedDays)
+                                potentialDays = set(self.availableDays) - set(checkedDays)
+                                # print(potentialDays)
                                 nextDay = random.sample(potentialDays, 1)[0]
                                 assigned_days.append(nextDay)
 
@@ -121,10 +170,10 @@ class TimeTable(SelectionSchemes):
                                 
 
          
-        print(self.population[0])
-        print(len(self.population))
-    #                 chromosome[day][classNumber] = [data['Course title'], data['Instructor'], room, startTime, endTime]
-    #         self.population.append(chromosome)
+        print(self.population[1])
+        # print(len(self.population))
+            # print(self.chromosome)
+            # print(self.faculty_working_hours)
     
     def checkClasses(self):
         counter = 0
@@ -136,14 +185,14 @@ class TimeTable(SelectionSchemes):
 
 
 filename = 'Spring 2023 Schedule.csv'
-populationSize = 20
+populationSize = 3
 mutationRate = 0.2
 offspringsNumber = 10
 generations = 100
 
 
 T1=TimeTable(filename, populationSize, offspringsNumber, mutationRate)
-# T1.checkClasses()
+T1.checkClasses()
 
     # def initeializePopulation(self):
     #     for i in range(self.populationSize):
