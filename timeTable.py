@@ -11,19 +11,12 @@ class TimeTable(SelectionSchemes):
     def __init__(self, filename, populationSize, offspringsNumber, mutationRate) -> None:
         self.data = DataCleaning(filename)
         self.availableDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-        # self.faculty_working_hours ={}
-        # self.chromosome = {'Monday':{}, 'Tuesday':{}, 'Wednesday':{}, 'Thursday':{}, 'Friday':{}}
-        
         self.population = []
         self.populationSize = populationSize
         self.offspringsNumber = offspringsNumber
         self.mutationRate = mutationRate
-
         self.DAY_START = "8:30"
         self.DAY_END = "19:00"
-        
-        # self.initializeChromosome()
-        # self.facultyClash("Sahaab Bader Sheikh","Monday")
         self.initializePopulation()
 
     def generate_start_time(self):
@@ -65,16 +58,7 @@ class TimeTable(SelectionSchemes):
 
         return chromosome, faculty_working_hours
         
-        # print("--------Data DICT ---------")
-        # print(self.data.class_nbr_dict)
-
-        # print("--------CHROMOSOME-------")
-        # print(self.chromosome)
-
-        # print("--------FACULTY WORKING HOURS-------")
-        # print(self.faculty_working_hours)
-        # print(len(self.faculty_working_hours))
-
+    # returns True if an instructor is teaching a class on the same day at the same time in two different rooms, otherwise returns False
     def facultyClash(self, instructor,day, start_time, end_time, faculty_working_hours):
         start_time = datetime.datetime.strptime(start_time, '%H:%M')
         end_time = datetime.datetime.strptime(end_time, '%H:%M')
@@ -88,32 +72,33 @@ class TimeTable(SelectionSchemes):
                 if start_time < other_end_time and end_time > other_start_time:
                     return True
             return False
-
+        
+    # adds the timeslot to the instructor's weekly schedule
     def addToFacultySchedule(self, instructor, day, start_time, end_time, faculty_working_hours):
         faculty_working_hours[instructor][day].append([start_time,end_time])
         return faculty_working_hours
+
 
     def initializePopulation(self):
         for i in range(self.populationSize):
             chromosome, faculty_working_hours = self.initializeChromosome()
 
             for classNumber, data in self.data.class_nbr_dict.items():
-                assigned_days = random.sample(self.availableDays, data['Frequency'])             
-                for day in assigned_days:
+                assigned_days = random.sample(self.availableDays, data['Frequency'])  # assigned random days for each class       
+                for day in assigned_days:  # iterates through days to find a suitable room on each day
                     is_roomfound = 0
                     room = random.sample(self.data.room_list,1)[0]
-                    if len(chromosome[day][room]) == 0:
+                    if len(chromosome[day][room]) == 0:           
                         current_class_start_time = self.DAY_START
                     else:
                         last_class = chromosome[day][room][-1]
                         current_class_start_time = self.add_five_minutes(last_class[1])
-
-
+                    # searching for a suitable room (with no faculty clash and ending before time limit) on same day
                     end_time = self.generate_time(current_class_start_time,data['Actual Class Duration'])
-                    if  self.facultyClash(data["Instructor"], day,current_class_start_time, end_time, faculty_working_hours) == False and self.is_end_time_within_limit(current_class_start_time,data['Actual Class Duration']): #add faculty
+                    if  self.facultyClash(data["Instructor"], day,current_class_start_time, end_time, faculty_working_hours) == False and self.is_end_time_within_limit(current_class_start_time,data['Actual Class Duration']):
                         chromosome[day][room].append([current_class_start_time,end_time,classNumber])
                         faculty_working_hours = self.addToFacultySchedule(data["Instructor"],day, current_class_start_time, end_time, faculty_working_hours)
-                        is_roomfound = 1
+                        is_roomfound = 1  # room found exit loop
                     else:                             
                         room_number_index = self.data.room_list.index(room)
                         startIndex = room_number_index
@@ -135,24 +120,15 @@ class TimeTable(SelectionSchemes):
                                 break
                             if room_number_index == startIndex and is_roomfound == 0:
                                 break
-                            
-
-
+                        # if room not found on the day, then we randomly select another day and look for a suitable room on that day
                         if (is_roomfound == 0):
                             potentialDays = set(self.availableDays) - set(assigned_days)
                             nextDay = random.sample(potentialDays, 1)[0]
                             assigned_days.append(nextDay)
 
-            # print('added chromosome')
             self.population.append(chromosome)             
                                 
-
-         
-        # print(self.population[0])
-        # print(len(self.population))
-            # print(self.chromosome)
-            # print(self.faculty_working_hours)
-    
+    # just to check if weekly schedule has all 447 classes
     def checkClasses(self, chromosome):
         counter = 0
         for day, dayInfo in chromosome.items():
@@ -173,48 +149,3 @@ T1=TimeTable(filename, populationSize, offspringsNumber, mutationRate)
 chromosome = T1.population[19]
 print(chromosome)
 T1.checkClasses(chromosome)
-
-    # def initeializePopulation(self):
-    #     for i in range(self.populationSize):
-    #         chromosome = {'Monday':{}, 'Tuesday':{}, 'Wednesday':{}, 'Thursday':{}, 'Friday':{}}
-    #         for classNumber, data in self.dc.class_nbr_dict.items():
-    #             days = random.sample(self.availableDays, data['Frequency'])
-    #             for day in days:
-    #                 room = random.sample(self.dc.room_list,1)[0]
-    #                 startTime = self.generate_start_time()
-    #                 endTime = (pd.to_datetime(startTime) + pd.to_timedelta(data['Actual Class Duration'], unit='m')).strftime('%H:%M')
-    #                 chromosome[day][classNumber] = [data['Course title'], data['Instructor'], room, startTime, endTime]
-    #         self.population.append(chromosome)
-
-    # def fitnessEvaluation(self, chromosome):
-    #     roomConflicts = 0
-    #     facultyClashes = 0
-    #     for day in chromosome.keys():
-    #         classes = list(chromosome[day].values())
-    #         # print(classes)
-    #         for i in range(len(classes)):
-    #             class_data = classes[i]
-    #             room = class_data[2]
-    #             instructor = class_data[1]
-    #             start_time = datetime.strptime(class_data[3], '%H:%M')
-    #             end_time = datetime.strptime(class_data[4], '%H:%M')
-    #             for j in range(i+1, len(classes)):
-    #                 other_class_data = classes[j]
-    #                 if other_class_data[2] == room:
-    #                     other_start_time = datetime.strptime(other_class_data[3], '%H:%M')
-    #                     other_end_time = datetime.strptime(other_class_data[4], '%H:%M')
-    #                     if start_time < other_end_time and end_time > other_start_time:
-    #                         roomConflicts += 1
-    #                 if other_class_data[1] == instructor:
-    #                     other_start_time = datetime.strptime(other_class_data[3], '%H:%M')
-    #                     other_end_time = datetime.strptime(other_class_data[4], '%H:%M')
-    #                     if start_time < other_end_time and end_time > other_start_time:
-    #                         facultyClashes += 1
-
-    #     conflicts = roomConflicts+facultyClashes
-    #     fitness = 1/(1+conflicts)
-    #     return fitness
-
-        # print(f'Total number of Room conflicts: {roomConflicts}')
-        # print(f'Total number of Faculty conflicts: {facultyClashes}')
-        # print(f'Total number of conflicts: {conflicts}')
